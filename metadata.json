@@ -1,0 +1,6 @@
+{
+  "name": "Hasebha - احسبها",
+  "description": "All-in-one financial management, invoicing, expense tracking, and AI accountant agent for businesses",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
