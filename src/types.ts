@@ -116,6 +116,7 @@ export interface FinancialAnalysisData {
 }
 
 export interface BusinessProfile {
+  id?: string;
   businessName: string;
   businessNameAr: string;
   ownerName: string;
@@ -127,6 +128,7 @@ export interface BusinessProfile {
   address: string;
   defaultCurrency: CurrencyCode;
   defaultVatRate: number;
+  subscriptionTier?: "free" | "pro" | "business";
   bankDetails: {
     bankName: string;
     accountNumber: string;
@@ -135,3 +137,4 @@ export interface BusinessProfile {
     vodafoneCashNumber: string;
   };
 }
+

@@ -98,11 +98,11 @@ export const CreateInvoiceTab: React.FC<{ onOpenContactImport?: () => void }> = 
     );
   };
 
-  const handleCreateAndShare = () => {
+  const handleCreateAndShare = async () => {
     const cust = customers.find((c) => c.id === selectedCustomerId) || customers[0];
     if (!cust) return;
 
-    const newInvoice = addInvoice({
+    const newInvoice = await addInvoice({
       customerId: cust.id,
       customerName: cust.name,
       customerNameAr: cust.nameAr,
@@ -125,7 +125,7 @@ export const CreateInvoiceTab: React.FC<{ onOpenContactImport?: () => void }> = 
     // Reset draft prefill
     setDraftInvoicePreFill(null);
 
-    // Open share modal
+    // Open share modal with resolved invoice
     setShareModalInvoice(newInvoice);
     setActiveTab("invoices");
   };

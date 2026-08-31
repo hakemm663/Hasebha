@@ -77,43 +77,37 @@ export const PhoneContactPickerModal: React.FC<{
     }
   };
 
-  const handleImportSelected = () => {
+  const handleImportSelected = async () => {
     const toImport = mockPhoneContacts.filter((c) =>
       selectedContacts.includes(c.phone)
     );
 
-    toImport.forEach((contact) => {
+    for (const contact of toImport) {
       // Check if not already in customers
       const exists = customers.some((c) => c.phone === contact.phone);
       if (!exists) {
-        addCustomer({
+        await addCustomer({
           name: contact.name,
           nameAr: contact.nameAr,
           phone: contact.phone,
           email: contact.email,
           address: contact.address,
-          totalInvoiced: 0,
-          outstandingBalance: 0,
-          avatarColor: contact.avatarColor,
         });
       }
-    });
+    }
 
     setSelectedContacts([]);
     onClose();
   };
 
-  const handleAddManualContact = (e: React.FormEvent) => {
+  const handleAddManualContact = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!customName || !customPhone) return;
+    if (!customName.trim() || !customPhone.trim()) return;
 
-    addCustomer({
+    await addCustomer({
       name: customName,
       nameAr: customName,
       phone: customPhone,
-      totalInvoiced: 0,
-      outstandingBalance: 0,
-      avatarColor: "bg-emerald-600",
     });
 
     setCustomName("");

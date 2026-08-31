@@ -1,6 +1,6 @@
 {
   "name": "Hasebha - احسبها",
-  "description": "All-in-one financial management, invoicing, expense tracking, and AI accountant agent for businesses",
+  "description": "Real-time SaaS financial dashboard and mobile app companion for small business owners backed by Supabase with AI accountant, invoice generation, expense tracking, and WhatsApp reminders.",
   "requestFramePermissions": ["microphone"],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
