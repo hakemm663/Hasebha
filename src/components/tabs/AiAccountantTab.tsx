@@ -321,7 +321,7 @@ export const AiAccountantTab: React.FC = () => {
                     )}
 
                     {/* Add Expense Action Card */}
-                    {msg.action === "add_expense" && (
+                    {(msg.action === "add_expense" || msg.action === "create_expense") && (
                       <div className="p-4 rounded-2xl bg-[#0A0A0A] border border-rose-500/30 space-y-3">
                         <div className="flex items-center justify-between">
                           <span className="font-bold text-rose-400 flex items-center gap-1.5 text-xs">
@@ -333,16 +333,69 @@ export const AiAccountantTab: React.FC = () => {
                           </span>
                         </div>
                         <div className="text-xs text-white/80 font-sans">
-                          {msg.actionData?.title} ({msg.actionData?.category})
+                          {msg.actionData?.title || msg.actionData?.description} ({msg.actionData?.category || "General"})
                         </div>
                         <button
                           onClick={() => {
                             executeAiAction(msg.action!, msg.actionData);
                             setActiveTab("invoices");
                           }}
-                          className="w-full py-2.5 bg-white/10 hover:bg-white/20 text-white font-bold text-xs rounded-xl transition-all"
+                          className="w-full py-2.5 bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/30 font-bold text-xs rounded-xl transition-all"
                         >
                           {isAr ? "تأكيد وإضافة لسجل المصروفات" : "Save to Expense Ledger"}
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Record Payment Action Card */}
+                    {msg.action === "record_payment" && (
+                      <div className="p-4 rounded-2xl bg-[#0A0A0A] border border-emerald-500/30 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-emerald-400 flex items-center gap-1.5 text-xs">
+                            <CheckCircle2 className="w-4 h-4" />
+                            {isAr ? "تسجيل تحصيل دفعة" : "Record Payment Collection"}
+                          </span>
+                          <span className="text-xs font-bold text-emerald-400">
+                            {formatCurrency(msg.actionData?.amount || 2000, currency, isAr)}
+                          </span>
+                        </div>
+                        <div className="text-xs text-white/80 font-sans">
+                          {msg.actionData?.customerName ? `${isAr ? "العميل:" : "Client:"} ${msg.actionData.customerName}` : ""} 
+                          {msg.actionData?.paymentMethod ? ` (${msg.actionData.paymentMethod})` : ""}
+                        </div>
+                        <button
+                          onClick={() => {
+                            executeAiAction(msg.action!, msg.actionData);
+                            setActiveTab("invoices");
+                          }}
+                          className="w-full py-2.5 bg-emerald-500 hover:bg-emerald-400 text-black font-bold text-xs rounded-xl transition-all shadow-md"
+                        >
+                          {isAr ? "تأكيد واستلام الدفعة" : "Confirm & Settle Payment"}
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Create Customer Action Card */}
+                    {msg.action === "create_customer" && (
+                      <div className="p-4 rounded-2xl bg-[#0A0A0A] border border-blue-500/30 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-blue-400 flex items-center gap-1.5 text-xs">
+                            <Zap className="w-4 h-4" />
+                            {isAr ? "تسجيل عميل جديد" : "Create New Customer"}
+                          </span>
+                        </div>
+                        <div className="text-xs text-white/80 font-sans">
+                          <div className="font-bold text-white">{msg.actionData?.name}</div>
+                          {msg.actionData?.phone && <div className="text-white/60">{msg.actionData.phone}</div>}
+                        </div>
+                        <button
+                          onClick={() => {
+                            executeAiAction(msg.action!, msg.actionData);
+                            setActiveTab("customers");
+                          }}
+                          className="w-full py-2.5 bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 border border-blue-500/30 font-bold text-xs rounded-xl transition-all"
+                        >
+                          {isAr ? "تأكيد وحفظ العميل" : "Confirm & Save Customer"}
                         </button>
                       </div>
                     )}

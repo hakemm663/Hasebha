@@ -26,6 +26,7 @@ export const CustomersTab: React.FC<{ onOpenContactImport: () => void }> = ({
     invoices,
     language,
     currency,
+    addCustomer,
     setActiveTab,
     setDraftInvoicePreFill,
     setShareModalInvoice,
@@ -34,6 +35,43 @@ export const CustomersTab: React.FC<{ onOpenContactImport: () => void }> = ({
   const isAr = language === "ar";
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [newCustName, setNewCustName] = useState("");
+  const [newCustNameAr, setNewCustNameAr] = useState("");
+  const [newCustPhone, setNewCustPhone] = useState("+20 ");
+  const [newCustEmail, setNewCustEmail] = useState("");
+  const [newCustCompany, setNewCustCompany] = useState("");
+  const [newCustAddress, setNewCustAddress] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSaveCustomer = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newCustName.trim()) return;
+    setIsSubmitting(true);
+    try {
+      const created = await addCustomer({
+        name: newCustName.trim(),
+        nameAr: newCustNameAr.trim() || undefined,
+        phone: newCustPhone.trim() || "+20 100 000 0000",
+        email: newCustEmail.trim() || undefined,
+        company: newCustCompany.trim() || undefined,
+        address: newCustAddress.trim() || undefined,
+        currency,
+      });
+      setIsAddModalOpen(false);
+      setNewCustName("");
+      setNewCustNameAr("");
+      setNewCustPhone("+20 ");
+      setNewCustEmail("");
+      setNewCustCompany("");
+      setNewCustAddress("");
+      setSelectedCustomer(created);
+    } catch (err) {
+      console.error("Failed to add customer:", err);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const filteredCustomers = customers.filter((c) => {
     return (
@@ -58,8 +96,8 @@ export const CustomersTab: React.FC<{ onOpenContactImport: () => void }> = ({
 
   return (
     <div className="space-y-6">
-      {/* Header & Import from Phone */}
-      <div className="flex items-center justify-between">
+      {/* Header & Actions */}
+      <div className="flex items-center justify-between gap-2 flex-wrap">
         <div>
           <h2 className="text-base font-bold text-white font-mono">
             {isAr ? "دليل العملاء والشركات" : "Customer Directory"}
@@ -69,13 +107,23 @@ export const CustomersTab: React.FC<{ onOpenContactImport: () => void }> = ({
           </span>
         </div>
 
-        <button
-          onClick={onOpenContactImport}
-          className="px-3.5 py-2 rounded-2xl bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 font-bold text-xs flex items-center gap-2 transition-all border border-emerald-500/20 font-mono"
-        >
-          <UserPlus className="w-3.5 h-3.5" />
-          <span>{isAr ? "استيراد من الهاتف" : "Import Contacts"}</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={onOpenContactImport}
+            className="px-3.5 py-2 rounded-2xl bg-white/5 text-white/80 hover:bg-white/10 font-bold text-xs flex items-center gap-2 transition-all border border-white/10 font-mono"
+          >
+            <UserPlus className="w-3.5 h-3.5" />
+            <span>{isAr ? "استيراد جهات الاتصال" : "Import Contacts"}</span>
+          </button>
+
+          <button
+            onClick={() => setIsAddModalOpen(true)}
+            className="px-3.5 py-2 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-black font-bold text-xs flex items-center gap-2 transition-all shadow-lg shadow-emerald-500/20 font-mono"
+          >
+            <Plus className="w-3.5 h-3.5 stroke-[3]" />
+            <span>{isAr ? "إضافة عميل جديد" : "Add Client"}</span>
+          </button>
+        </div>
       </div>
 
       {/* Search Customers */}
@@ -276,6 +324,141 @@ export const CustomersTab: React.FC<{ onOpenContactImport: () => void }> = ({
                   : `Create Invoice for ${selectedCustomer.name}`}
               </span>
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Add New Customer Modal */}
+      {isAddModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
+          <div className="w-full max-w-md bg-[#0A0A0A] rounded-3xl p-6 shadow-2xl border border-white/10 text-white space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-white/5">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center border border-emerald-500/20">
+                  <UserPlus className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-sm text-white font-mono">
+                    {isAr ? "تسجيل عميل أو شركة جديدة" : "Register New Client"}
+                  </h3>
+                  <p className="text-[10px] text-white/40">
+                    {isAr ? "إضافة عميل إلى قاعدة بياناتك وإصدار فواتير له" : "Add client to your business ledger"}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsAddModalOpen(false)}
+                className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center hover:bg-white/10 text-white/60"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveCustomer} className="space-y-3 font-mono text-xs">
+              <div>
+                <label className="block text-[11px] font-bold text-white/50 mb-1">
+                  {isAr ? "اسم العميل / الشركة (English / الرئيسي) *" : "Client / Company Name *"}
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder={isAr ? "مثال: Ahmed Mahmoud أو Vodafone Egypt" : "e.g. Acme Corp"}
+                  value={newCustName}
+                  onChange={(e) => setNewCustName(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-2xl bg-[#0F0F0F] border border-white/10 text-white placeholder:text-white/20 focus:outline-none focus:border-emerald-500/50"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-white/50 mb-1">
+                  {isAr ? "الاسم بالعربي (اختياري)" : "Arabic Name (Optional)"}
+                </label>
+                <input
+                  type="text"
+                  placeholder={isAr ? "مثال: أحمد محمود" : "e.g. شركة الأمل"}
+                  value={newCustNameAr}
+                  onChange={(e) => setNewCustNameAr(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-2xl bg-[#0F0F0F] border border-white/10 text-white placeholder:text-white/20 focus:outline-none focus:border-emerald-500/50"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-bold text-white/50 mb-1">
+                    {isAr ? "رقم الهاتف / واتساب *" : "Phone / WhatsApp *"}
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="+20 100 000 0000"
+                    value={newCustPhone}
+                    onChange={(e) => setNewCustPhone(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-2xl bg-[#0F0F0F] border border-white/10 text-white placeholder:text-white/20 focus:outline-none focus:border-emerald-500/50 text-left ltr"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold text-white/50 mb-1">
+                    {isAr ? "البريد الإلكتروني" : "Email"}
+                  </label>
+                  <input
+                    type="email"
+                    placeholder="client@domain.com"
+                    value={newCustEmail}
+                    onChange={(e) => setNewCustEmail(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-2xl bg-[#0F0F0F] border border-white/10 text-white placeholder:text-white/20 focus:outline-none focus:border-emerald-500/50"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-white/50 mb-1">
+                  {isAr ? "اسم المؤسسة / النشاط" : "Company / Organization"}
+                </label>
+                <input
+                  type="text"
+                  placeholder={isAr ? "مثال: ستوديو الإبداع" : "e.g. Design Studio LLC"}
+                  value={newCustCompany}
+                  onChange={(e) => setNewCustCompany(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-2xl bg-[#0F0F0F] border border-white/10 text-white placeholder:text-white/20 focus:outline-none focus:border-emerald-500/50"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-white/50 mb-1">
+                  {isAr ? "العنوان / المدينة" : "Address / Location"}
+                </label>
+                <input
+                  type="text"
+                  placeholder={isAr ? "مثال: المعادي، القاهرة" : "e.g. New Cairo, Egypt"}
+                  value={newCustAddress}
+                  onChange={(e) => setNewCustAddress(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-2xl bg-[#0F0F0F] border border-white/10 text-white placeholder:text-white/20 focus:outline-none focus:border-emerald-500/50"
+                />
+              </div>
+
+              <div className="pt-3 flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsAddModalOpen(false)}
+                  className="px-4 py-2.5 rounded-2xl bg-white/5 hover:bg-white/10 text-white/60 font-bold transition-all"
+                >
+                  {isAr ? "إلغاء" : "Cancel"}
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="px-5 py-2.5 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-black font-bold shadow-lg shadow-emerald-500/20 transition-all disabled:opacity-50"
+                >
+                  {isSubmitting
+                    ? isAr
+                      ? "جاري الحفظ..."
+                      : "Saving..."
+                    : isAr
+                    ? "حفظ العميل"
+                    : "Save Client"}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

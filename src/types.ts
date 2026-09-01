@@ -55,6 +55,8 @@ export interface Expense {
   currency: CurrencyCode;
   notes?: string;
   receiptUrl?: string;
+  receiptStoragePath?: string;
+  receiptSignedUrl?: string;
   paymentMethod: string;
 }
 
@@ -129,6 +131,14 @@ export interface BusinessProfile {
   defaultCurrency: CurrencyCode;
   defaultVatRate: number;
   subscriptionTier?: "free" | "pro" | "business";
+  subscriptionStatus?: "active" | "trialing" | "past_due" | "canceled";
+  subscriptionRenewalDate?: string;
+  paymentMethodSaved?: {
+    cardBrand?: string;
+    last4?: string;
+    expiryDate?: string;
+    type: "card" | "instapay" | "wallet";
+  };
   bankDetails: {
     bankName: string;
     accountNumber: string;
@@ -137,4 +147,36 @@ export interface BusinessProfile {
     vodafoneCashNumber: string;
   };
 }
+
+export type NotificationType =
+  | "payment_received"
+  | "invoice_viewed"
+  | "overdue_alert"
+  | "tax_deadline"
+  | "ai_recommendation"
+  | "system";
+
+export interface AppNotification {
+  id: string;
+  title: string;
+  titleAr: string;
+  message: string;
+  messageAr: string;
+  type: NotificationType;
+  timestamp: string;
+  isRead: boolean;
+  actionUrl?: string;
+  relatedId?: string;
+}
+
+export interface AiChatSession {
+  id: string;
+  title: string;
+  titleAr: string;
+  createdAt: string;
+  updatedAt?: string;
+  messagesCount?: number;
+  messages?: AiChatMessage[];
+}
+
 

@@ -11,11 +11,18 @@ import { CreateInvoiceTab } from "./components/tabs/CreateInvoiceTab";
 import { InsightsTab } from "./components/tabs/InsightsTab";
 import { CustomersTab } from "./components/tabs/CustomersTab";
 import { AiAccountantTab } from "./components/tabs/AiAccountantTab";
+import { NotificationsTab } from "./components/tabs/NotificationsTab";
+import { SettingsTab } from "./components/tabs/SettingsTab";
 import { QuickActionModal } from "./components/QuickActionModal";
 import { ShareInvoiceModal } from "./components/modals/ShareInvoiceModal";
 import { PublicInvoiceModal } from "./components/modals/PublicInvoiceModal";
 import { PhoneContactPickerModal } from "./components/modals/PhoneContactPickerModal";
-import { FlutterArchitectureModal } from "./components/modals/FlutterArchitectureModal";
+import { MobileAppModal } from "./components/modals/MobileAppModal";
+import { AuthModal } from "./components/modals/AuthModal";
+import { SubscriptionModal } from "./components/modals/SubscriptionModal";
+import { ReceiptScanModal } from "./components/modals/ReceiptScanModal";
+import { PaymobCheckoutModal } from "./components/modals/PaymobCheckoutModal";
+import { PaymobArchitectureGuideModal } from "./components/modals/PaymobArchitectureGuideModal";
 import { X } from "lucide-react";
 
 function getPublicTokenFromUrl(): string | null {
@@ -44,10 +51,26 @@ function getPublicTokenFromUrl(): string | null {
 }
 
 const MainApp: React.FC = () => {
-  const { user, activeTab, isLoadingAuth } = useApp();
+  const {
+    user,
+    activeTab,
+    isLoadingAuth,
+    showLandingPage,
+    setShowLandingPage,
+    isAuthModalOpen,
+    setIsAuthModalOpen,
+    isSubscriptionModalOpen,
+    setIsSubscriptionModalOpen,
+    isReceiptScanModalOpen,
+    setIsReceiptScanModalOpen,
+    isPaymobModalOpen,
+    setIsPaymobModalOpen,
+    isPaymobGuideModalOpen,
+    setIsPaymobGuideModalOpen,
+    business,
+  } = useApp();
   const [showContactPicker, setShowContactPicker] = useState(false);
-  const [showFlutterArch, setShowFlutterArch] = useState(false);
-  const [showLandingPage, setShowLandingPage] = useState(false);
+  const [showMobileAppModal, setShowMobileAppModal] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [publicToken, setPublicToken] = useState<string | null>(getPublicTokenFromUrl());
 
@@ -82,14 +105,14 @@ const MainApp: React.FC = () => {
       <div className="min-h-screen bg-[#050505] flex items-center justify-center text-white font-mono">
         <div className="text-center space-y-3">
           <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-xs text-white/50">Initializing Hasebha Workspace...</p>
+          <p className="text-xs text-white/50">Initializing Hasebha SaaS Workspace...</p>
         </div>
       </div>
     );
   }
 
   // 3. If user clicked to view the SaaS Landing Page & Pricing
-  if (showLandingPage) {
+  if (showLandingPage && !user) {
     return <LandingPage onExploreDemo={() => setShowLandingPage(false)} />;
   }
 
@@ -99,7 +122,7 @@ const MainApp: React.FC = () => {
       {/* Desktop Sidebar (hidden on < lg) */}
       <div className="hidden lg:block shrink-0">
         <Sidebar
-          onOpenFlutterArch={() => setShowFlutterArch(true)}
+          onOpenMobileApp={() => setShowMobileAppModal(true)}
           onOpenLanding={() => setShowLandingPage(true)}
         />
       </div>
@@ -125,8 +148,8 @@ const MainApp: React.FC = () => {
             </div>
 
             <Sidebar
-              onOpenFlutterArch={() => {
-                setShowFlutterArch(true);
+              onOpenMobileApp={() => {
+                setShowMobileAppModal(true);
                 setMobileNavOpen(false);
               }}
               onOpenLanding={() => {
@@ -142,7 +165,7 @@ const MainApp: React.FC = () => {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0">
         <Header
-          onOpenFlutterArch={() => setShowFlutterArch(true)}
+          onOpenFlutterArch={() => setShowMobileAppModal(true)}
           onOpenLanding={() => setShowLandingPage(true)}
           onToggleMobileMenu={() => setMobileNavOpen(true)}
         />
@@ -170,6 +193,8 @@ const MainApp: React.FC = () => {
                       onOpenContactImport={() => setShowContactPicker(true)}
                     />
                   )}
+                  {activeTab === "notifications" && <NotificationsTab />}
+                  {activeTab === "settings" && <SettingsTab />}
                 </div>
 
                 {/* Right Column: Live AI Copilot Panel */}
@@ -190,9 +215,31 @@ const MainApp: React.FC = () => {
         isOpen={showContactPicker}
         onClose={() => setShowContactPicker(false)}
       />
-      <FlutterArchitectureModal
-        isOpen={showFlutterArch}
-        onClose={() => setShowFlutterArch(false)}
+      <MobileAppModal
+        isOpen={showMobileAppModal}
+        onClose={() => setShowMobileAppModal(false)}
+      />
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+      />
+      <SubscriptionModal
+        isOpen={isSubscriptionModalOpen}
+        onClose={() => setIsSubscriptionModalOpen(false)}
+      />
+      <ReceiptScanModal
+        isOpen={isReceiptScanModalOpen}
+        onClose={() => setIsReceiptScanModalOpen(false)}
+      />
+      <PaymobCheckoutModal
+        isOpen={isPaymobModalOpen}
+        onClose={() => setIsPaymobModalOpen(false)}
+        tier={business.subscriptionTier === "business" ? "business" : "pro"}
+        billingCycle="monthly"
+      />
+      <PaymobArchitectureGuideModal
+        isOpen={isPaymobGuideModalOpen}
+        onClose={() => setIsPaymobGuideModalOpen(false)}
       />
     </div>
   );

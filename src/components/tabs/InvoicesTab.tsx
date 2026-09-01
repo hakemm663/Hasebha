@@ -15,8 +15,17 @@ import {
   AlertCircle,
   MoreVertical,
   ExternalLink,
+  Scan,
+  FileSpreadsheet,
 } from "lucide-react";
-import { formatCurrency, formatDate, getStatusBadge, generateWhatsAppLink } from "../../utils/formatters";
+import {
+  formatCurrency,
+  formatDate,
+  getStatusBadge,
+  generateWhatsAppLink,
+  exportInvoicesToCsv,
+  exportExpensesToCsv,
+} from "../../utils/formatters";
 import { generateInvoicePdf } from "../../utils/pdfGenerator";
 import { InvoiceStatus } from "../../types";
 
@@ -32,6 +41,7 @@ export const InvoicesTab: React.FC = () => {
     setPublicPreviewInvoice,
     setActiveTab,
     setQuickActionOpen,
+    setIsReceiptScanModalOpen,
   } = useApp();
 
   const isAr = language === "ar";
@@ -85,9 +95,9 @@ export const InvoicesTab: React.FC = () => {
         </button>
       </div>
 
-      {/* Search Bar & Action */}
-      <div className="flex items-center gap-3">
-        <div className="flex-1 relative">
+      {/* Search Bar & Actions */}
+      <div className="flex flex-wrap items-center gap-2.5 sm:gap-3">
+        <div className="flex-1 min-w-[200px] relative">
           <Search className="w-4 h-4 text-white/30 absolute left-3.5 top-1/2 -translate-y-1/2 rtl:left-auto rtl:right-3.5" />
           <input
             type="text"
@@ -106,9 +116,38 @@ export const InvoicesTab: React.FC = () => {
           />
         </div>
 
+        {/* CSV Export Button */}
+        <button
+          onClick={() => {
+            if (subTab === "invoices") {
+              exportInvoicesToCsv(invoices, business.businessName);
+            } else {
+              exportExpensesToCsv(expenses, business.businessName);
+            }
+          }}
+          className="p-2.5 sm:px-3.5 sm:py-2.5 rounded-2xl bg-white/5 hover:bg-white/10 text-white/80 border border-white/10 text-xs font-mono font-bold flex items-center gap-1.5 transition-colors"
+          title={isAr ? "تصدير إلى ملف إكسيل / CSV" : "Export to CSV/Excel"}
+        >
+          <FileSpreadsheet className="w-4 h-4 text-emerald-400" />
+          <span className="hidden sm:inline">{isAr ? "تصدير CSV" : "Export CSV"}</span>
+        </button>
+
+        {/* Scan Receipt Button on Expenses */}
+        {subTab === "expenses" && (
+          <button
+            onClick={() => setIsReceiptScanModalOpen(true)}
+            className="p-2.5 sm:px-3.5 sm:py-2.5 rounded-2xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 text-xs font-mono font-bold flex items-center gap-1.5 transition-colors"
+            title={isAr ? "مسح إيصال بالذكاء الاصطناعي (OCR)" : "Smart OCR Receipt Scan"}
+          >
+            <Scan className="w-4 h-4" />
+            <span className="hidden sm:inline">{isAr ? "مسح إيصال (OCR)" : "Scan Receipt"}</span>
+          </button>
+        )}
+
+        {/* Add New Button */}
         <button
           onClick={() => (subTab === "invoices" ? setActiveTab("create") : setQuickActionOpen(true))}
-          className="p-3 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-black font-bold transition-all shadow-lg shadow-emerald-500/20 shrink-0"
+          className="p-2.5 sm:p-3 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-black font-bold transition-all shadow-lg shadow-emerald-500/20 shrink-0"
           title={isAr ? "إضافة جديد" : "Add New"}
         >
           <Plus className="w-4 h-4 stroke-[3]" />

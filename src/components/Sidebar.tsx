@@ -7,19 +7,19 @@ import {
   Users,
   Sparkles,
   PlusCircle,
-  Code,
-  ShieldCheck,
-  Zap,
-  Cloud,
+  Smartphone,
+  Building2,
   LogOut,
-  ChevronUp,
+  Settings,
+  Bell,
+  CreditCard,
 } from "lucide-react";
 
 export const Sidebar: React.FC<{
-  onOpenFlutterArch: () => void;
+  onOpenMobileApp: () => void;
   onOpenLanding?: () => void;
   onCloseMobileNav?: () => void;
-}> = ({ onOpenFlutterArch, onOpenLanding, onCloseMobileNav }) => {
+}> = ({ onOpenMobileApp, onOpenLanding, onCloseMobileNav }) => {
   const {
     activeTab,
     setActiveTab,
@@ -30,10 +30,11 @@ export const Sidebar: React.FC<{
     demoMode,
     signOut,
     isSupabaseOnline,
-    setSubscriptionTier,
+    unreadNotificationsCount,
+    setIsAuthModalOpen,
+    setIsPaymobModalOpen,
   } = useApp();
   const isAr = language === "ar";
-  const [showTierMenu, setShowTierMenu] = useState(false);
 
   const currentTier = business.subscriptionTier || "pro";
 
@@ -73,6 +74,18 @@ export const Sidebar: React.FC<{
       label: isAr ? "محاسب احسبها الذكي" : "AI Accountant Agent",
       icon: Sparkles,
       badge: isAr ? "نشط" : "LIVE",
+    },
+    {
+      id: "notifications" as NavTab,
+      label: isAr ? "مركز الإشعارات" : "Notifications",
+      icon: Bell,
+      badge: unreadNotificationsCount > 0 ? unreadNotificationsCount : null,
+    },
+    {
+      id: "settings" as NavTab,
+      label: isAr ? "إعدادات المنشأة والسداد" : "Business & Payments",
+      icon: Settings,
+      badge: null,
     },
   ];
 
@@ -139,6 +152,8 @@ export const Sidebar: React.FC<{
                     className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold font-mono ${
                       item.id === "ai"
                         ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                        : item.id === "notifications"
+                        ? "bg-emerald-500 text-black font-extrabold"
                         : "bg-white/10 text-white/60"
                     }`}
                   >
@@ -150,88 +165,99 @@ export const Sidebar: React.FC<{
           })}
         </div>
 
-        {/* Developer & SaaS Navigation */}
+        {/* Mobile App & SaaS Navigation */}
         <div className="pt-2 border-t border-white/5 space-y-1 font-mono">
           <p className="text-[10px] text-white/30 uppercase tracking-widest font-semibold ml-2 rtl:mr-2 mb-1">
-            {isAr ? "المنظومة والباقات" : "Platform & SaaS"}
+            {isAr ? "المنظومة والخدمات" : "Ecosystem"}
           </p>
+          <button
+            onClick={() => {
+              onOpenMobileApp();
+              if (onCloseMobileNav) onCloseMobileNav();
+            }}
+            className="w-full flex items-center justify-between p-3 rounded-xl text-white/50 hover:text-emerald-400 hover:bg-emerald-500/5 transition-colors text-xs font-medium group"
+          >
+            <div className="flex items-center gap-3">
+              <Smartphone className="w-4 h-4 text-emerald-500/60 group-hover:text-emerald-400 transition-colors" />
+              <span>{isAr ? "تطبيق الموبايل" : "Mobile App"}</span>
+            </div>
+            <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold">
+              iOS / Android
+            </span>
+          </button>
           {onOpenLanding && (
             <button
-              onClick={onOpenLanding}
-              className="w-full flex items-center gap-3 p-3 rounded-xl text-white/40 hover:text-emerald-400 hover:bg-emerald-500/5 transition-colors text-xs font-medium"
+              onClick={() => {
+                onOpenLanding();
+                if (onCloseMobileNav) onCloseMobileNav();
+              }}
+              className="w-full flex items-center gap-3 p-3 rounded-xl text-white/40 hover:text-white hover:bg-white/[0.02] transition-colors text-xs font-medium"
             >
-              <Sparkles className="w-4 h-4 text-emerald-500/60" />
-              <span>{isAr ? "مميزات SaaS وباقات الأسعار" : "SaaS & Pricing Tiers"}</span>
+              <Sparkles className="w-4 h-4 text-white/30" />
+              <span>{isAr ? "بوابات الدفع والأسعار" : "Paymob & Pricing"}</span>
             </button>
           )}
-          <button
-            onClick={onOpenFlutterArch}
-            className="w-full flex items-center gap-3 p-3 rounded-xl text-white/40 hover:text-cyan-400 hover:bg-cyan-500/5 transition-colors text-xs font-medium"
-          >
-            <Code className="w-4 h-4 text-cyan-500/60" />
-            <span>{isAr ? "تطبيق Flutter والربط" : "Flutter App Blueprint"}</span>
-          </button>
         </div>
       </div>
 
       {/* Subscription Tier & User Footer Card */}
       <div className="mt-auto pt-4 border-t border-white/5 space-y-3 font-mono">
-        {/* Tier Card with Switcher */}
-        <div className="bg-gradient-to-br from-[#141E18] to-[#0A0A0A] p-3.5 rounded-2xl border border-emerald-500/30 relative">
+        {/* Tier Card with Paymob Upgrade Modal Trigger */}
+        <div
+          onClick={() => setIsPaymobModalOpen(true)}
+          className="bg-gradient-to-br from-[#141E18] to-[#0A0A0A] p-3.5 rounded-2xl border border-emerald-500/30 relative cursor-pointer hover:border-emerald-500/60 transition-all group"
+        >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-emerald-400" />
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
               <span className="text-xs font-bold text-white uppercase">
                 {currentTier} Plan
               </span>
             </div>
-            <button
-              onClick={() => setShowTierMenu(!showTierMenu)}
-              className="text-[10px] text-emerald-400 hover:text-emerald-300 font-bold underline"
-            >
-              {isAr ? "تغيير" : "Change"}
-            </button>
-          </div>
-
-          {showTierMenu && (
-            <div className="mt-2.5 pt-2 border-t border-white/10 grid grid-cols-3 gap-1 text-[10px]">
-              {(["free", "pro", "business"] as const).map((t) => (
-                <button
-                  key={t}
-                  onClick={() => {
-                    setSubscriptionTier(t);
-                    setShowTierMenu(false);
-                  }}
-                  className={`py-1 rounded font-bold uppercase transition-colors ${
-                    currentTier === t
-                      ? "bg-emerald-500 text-black"
-                      : "bg-white/5 text-white/60 hover:text-white"
-                  }`}
-                >
-                  {t}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* User Account / Sign Out Row */}
-        <div className="flex items-center justify-between text-xs text-white/50 px-1">
-          <div className="truncate max-w-[150px]">
-            <span className="text-[11px] text-white/80 block truncate">
-              {user?.email || (demoMode ? "Demo Mode" : business.ownerName)}
+            <span className="text-[10px] text-emerald-400 group-hover:text-emerald-300 font-bold underline flex items-center gap-1">
+              <CreditCard className="w-3 h-3" />
+              <span>{isAr ? "Paymob" : "Paymob"}</span>
             </span>
           </div>
-          <button
-            onClick={signOut}
-            title={isAr ? "تسجيل الخروج" : "Sign Out"}
-            className="p-1.5 rounded-lg hover:bg-rose-500/10 hover:text-rose-400 text-white/40 transition-colors"
+          <p className="text-[10px] text-white/40 mt-1 font-sans">
+            {isAr ? "فواتير غير محدودة + OCR + تذكيرات" : "Unlimited invoices + OCR + AI Copilot"}
+          </p>
+        </div>
+
+        {/* User Account / Sign In / Sign Out Row */}
+        <div className="flex items-center justify-between text-xs text-white/50 px-1">
+          <div
+            onClick={() => {
+              if (user) {
+                setActiveTab("settings");
+              } else {
+                setIsAuthModalOpen(true);
+              }
+            }}
+            className="truncate max-w-[150px] cursor-pointer hover:text-white transition-colors"
           >
-            <LogOut className="w-4 h-4" />
-          </button>
+            <span className="text-[11px] text-white/80 block truncate">
+              {user?.email || (demoMode ? (isAr ? "الوضع التجريبي" : "Demo Mode") : business.ownerName || "Account")}
+            </span>
+          </div>
+          {user || demoMode ? (
+            <button
+              onClick={signOut}
+              title={isAr ? "تسجيل الخروج" : "Sign Out"}
+              className="p-1.5 rounded-lg hover:bg-rose-500/10 hover:text-rose-400 text-white/40 transition-colors"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
+          ) : (
+            <button
+              onClick={() => setIsAuthModalOpen(true)}
+              className="text-[10px] text-emerald-400 hover:text-emerald-300 font-bold"
+            >
+              {isAr ? "دخول" : "Sign In"}
+            </button>
+          )}
         </div>
       </div>
     </aside>
   );
 };
-

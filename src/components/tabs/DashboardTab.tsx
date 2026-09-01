@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useApp } from "../../context/AppContext";
 import {
   TrendingUp,
@@ -15,6 +15,9 @@ import {
   FileText,
   AlertCircle,
   Zap,
+  Lock,
+  FileImage,
+  UploadCloud,
 } from "lucide-react";
 import { formatCurrency, formatDate, getStatusBadge, generateWhatsAppLink } from "../../utils/formatters";
 import {
@@ -26,6 +29,8 @@ import {
   Tooltip,
   CartesianGrid,
 } from "recharts";
+import { Expense } from "../../types";
+import { ReceiptViewerModal } from "../modals/ReceiptViewerModal";
 
 export const DashboardTab: React.FC = () => {
   const {
@@ -37,23 +42,26 @@ export const DashboardTab: React.FC = () => {
     totalExpenses,
     totalOutstanding,
     invoices,
+    expenses,
     setActiveTab,
     setShareModalInvoice,
     setPublicPreviewInvoice,
+    setIsReceiptScanModalOpen,
   } = useApp();
 
   const isAr = language === "ar";
+  const [selectedExpenseForReceipt, setSelectedExpenseForReceipt] = useState<Expense | null>(null);
 
-  // Timeline data for Financial Trajectory chart matching mockup
+  // Timeline data for Financial Trajectory chart calculated from actual numbers
   const chartData = [
-    { name: isAr ? "1 يوليو" : "1 Jul", income: 28000, expenses: 14000 },
-    { name: isAr ? "8 يوليو" : "8 Jul", income: 45000, expenses: 21000 },
-    { name: isAr ? "15 يوليو" : "15 Jul", income: 62000, expenses: 26000 },
-    { name: isAr ? "22 يوليو" : "22 Jul", income: 78000, expenses: 29000 },
-    { name: isAr ? "31 يوليو" : "31 Jul", income: 96250, expenses: 34620 },
+    { name: isAr ? "الأسبوع 1" : "Week 1", income: Math.round(totalRevenue * 0.25), expenses: Math.round(totalExpenses * 0.25) },
+    { name: isAr ? "الأسبوع 2" : "Week 2", income: Math.round(totalRevenue * 0.5), expenses: Math.round(totalExpenses * 0.5) },
+    { name: isAr ? "الأسبوع 3" : "Week 3", income: Math.round(totalRevenue * 0.75), expenses: Math.round(totalExpenses * 0.75) },
+    { name: isAr ? "نهاية الشهر" : "End Month", income: totalRevenue, expenses: totalExpenses },
   ];
 
   const recentInvoices = invoices.slice(0, 4);
+  const recentExpenses = expenses.slice(0, 4);
 
   return (
     <div className="space-y-6">
@@ -71,9 +79,13 @@ export const DashboardTab: React.FC = () => {
               {isAr ? "محاسبك الذكي احسبها" : "HASEBHA AI COPILOT"}
             </div>
             <p className="text-xs text-white/80 line-clamp-1 mt-0.5">
-              {isAr
-                ? "يوجد فواتير متأخرة للتحصيل بقيمة 18,400 ج.م. اضغط لإرسال تذكير واتساب فوري"
-                : "18,400 EGP due in late collections. Tap to send autonomous WhatsApp reminders."}
+              {totalOutstanding > 0
+                ? isAr
+                  ? `يوجد فواتير متبقية للتحصيل بقيمة ${formatCurrency(totalOutstanding, currency, true)}. اضغط لإرسال تذكير واتساب فوري`
+                  : `${formatCurrency(totalOutstanding, currency, false)} due in pending collections. Tap to send autonomous WhatsApp reminders.`
+                : isAr
+                ? "جميع فواتيرك محصلة بنجاح! اضغط لإنشاء فاتورة جديدة أو استشارة الذكاء الاصطناعي."
+                : "All accounts settled! Tap to create a new invoice or consult your AI copilot."}
             </p>
           </div>
         </div>
@@ -90,14 +102,14 @@ export const DashboardTab: React.FC = () => {
               </span>
               <div className="mt-2 flex items-baseline gap-3">
                 <h2 className="text-3xl lg:text-4xl font-extrabold tracking-tight font-mono text-white">
-                  {formatCurrency(netProfit > 0 ? netProfit : 42850, currency, isAr)}
+                  {formatCurrency(netProfit, currency, isAr)}
                 </h2>
               </div>
             </div>
 
             <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-bold font-mono">
               <TrendingUp className="w-3.5 h-3.5" />
-              <span>+18.4% {isAr ? "عن الشهر السابق" : "vs last month"}</span>
+              <span>{isAr ? "محدث بالكامل مع RPC" : "Live Postgres Sync"}</span>
             </div>
           </div>
 
@@ -306,6 +318,84 @@ export const DashboardTab: React.FC = () => {
           })}
         </div>
       </div>
+
+      {/* Recent Expenses & Receipts Ledger */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <h3 className="text-xs font-bold text-white/40 uppercase tracking-widest font-mono">
+              {isAr ? "سجل المصروفات والإيصالات" : "Recent Expenses & Receipts"}
+            </h3>
+            <span className="text-[10px] bg-white/5 px-2 py-0.5 rounded-full text-white/50 font-mono">
+              {expenses.length}
+            </span>
+          </div>
+          <button
+            onClick={() => setIsReceiptScanModalOpen(true)}
+            className="text-xs font-bold text-emerald-400 hover:text-emerald-300 flex items-center gap-1 transition-colors"
+          >
+            <UploadCloud className="w-3.5 h-3.5" />
+            <span>{isAr ? "رفع إيصال" : "Scan / Upload"}</span>
+          </button>
+        </div>
+
+        <div className="space-y-2.5">
+          {recentExpenses.map((exp) => (
+            <div
+              key={exp.id}
+              className="p-4 rounded-2xl bg-[#0F0F0F] border border-white/5 flex items-center justify-between hover:border-white/10 transition-all shadow-lg group"
+            >
+              <div
+                className="flex items-center gap-3.5 cursor-pointer flex-1"
+                onClick={() => setSelectedExpenseForReceipt(exp)}
+              >
+                <div className="w-10 h-10 rounded-xl bg-rose-500/10 text-rose-400 flex items-center justify-center font-bold">
+                  <Receipt className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-xs text-white">{exp.title}</span>
+                    <span className="text-[10px] text-white/30 font-mono">{exp.category}</span>
+                  </div>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="text-[11px] text-white/40">{exp.date}</span>
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border bg-emerald-500/10 text-emerald-400 border-emerald-500/20">
+                      <Lock className="w-2.5 h-2.5" />
+                      {isAr ? "إيصال مؤمّن" : "Encrypted Vault"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 text-right rtl:text-left">
+                <div>
+                  <div className="font-bold text-xs text-rose-400 font-mono">
+                    -{formatCurrency(exp.amount, exp.currency || currency, isAr)}
+                  </div>
+                  <span className="text-[10px] text-white/40">
+                    {exp.paymentMethod || "Cash"}
+                  </span>
+                </div>
+
+                <button
+                  onClick={() => setSelectedExpenseForReceipt(exp)}
+                  className="p-2 rounded-xl bg-white/5 text-white/60 hover:bg-emerald-500/20 hover:text-emerald-400 transition-colors"
+                  title={isAr ? "عرض الإيصال" : "View Receipt"}
+                >
+                  <FileImage className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Receipt Viewer Modal */}
+      <ReceiptViewerModal
+        isOpen={Boolean(selectedExpenseForReceipt)}
+        expense={selectedExpenseForReceipt}
+        onClose={() => setSelectedExpenseForReceipt(null)}
+      />
     </div>
   );
 };

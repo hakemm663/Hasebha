@@ -208,7 +208,7 @@ export async function getPublicInvoiceByToken(shareToken: string) {
 }
 
 /**
- * Call the AI Accountant Supabase Edge Function
+ * Call the AI Accountant Supabase Edge Function with automatic fallback to server AI route
  */
 export async function callAiAccountantEdge(payload: {
   mode: "agent" | "analyze" | "reminder";
@@ -221,36 +221,51 @@ export async function callAiAccountantEdge(payload: {
   dueDate?: string;
   currency?: string;
 }) {
-  if (!isSupabaseConfigured) {
-    return { success: false, fallback: true, error: "Supabase unconfigured" };
+  // 1. If Supabase is fully configured, attempt Edge Function first
+  if (isSupabaseConfigured) {
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      const edgeUrl = `${supabaseUrl.replace(/\/$/, "")}/functions/v1/ai-accountant`;
+
+      const response = await fetch(edgeUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          apikey: supabaseKey,
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        return { success: true, data, fallback: false };
+      }
+    } catch (err: any) {
+      console.warn("AI Edge function invocation failed, falling back to server route:", err.message);
+    }
   }
 
+  // 2. Call server-side AI Accountant route (powered by Groq / Gemini with real API key)
   try {
-    const { data: sessionData } = await supabase.auth.getSession();
-    const token = sessionData.session?.access_token;
-
-    const edgeUrl = `${supabaseUrl.replace(/\/$/, "")}/functions/v1/ai-accountant`;
-
-    const response = await fetch(edgeUrl, {
+    const srvRes = await fetch("/api/ai/accountant", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        apikey: supabaseKey,
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
-      body: JSON.stringify(payload),
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        message: payload.message,
+        history: payload.history,
+        language: payload.language || "ar",
+      }),
     });
 
-    if (!response.ok) {
-      const errText = await response.text();
-      console.warn("AI Edge function returned non-ok:", response.status, errText);
-      return { success: false, fallback: true, error: errText };
+    if (srvRes.ok) {
+      const srvData = await srvRes.json();
+      return { success: true, data: srvData.data, model: srvData.model, fallback: false };
     }
-
-    const data = await response.json();
-    return { success: true, data, fallback: false };
   } catch (err: any) {
-    console.warn("AI Edge function invocation failed:", err.message);
-    return { success: false, fallback: true, error: err.message };
+    console.warn("Server AI accountant call failed:", err.message);
   }
+
+  return { success: false, fallback: true, error: "AI unreachable" };
 }
