@@ -85,7 +85,7 @@ Do NOT wrap the JSON in markdown code fences (\`\`\`json). Output pure parseable
 
     // 1. Try Groq API if key is present
     if (apiKey && apiKey.startsWith("gsk_")) {
-      const groqModels = ["openai/gpt-oss-120b", "qwen/qwen3.8-27b", "allam-2-7b"];
+      const groqModels = ["llama-3.3-70b-versatile", "llama-3.1-8b-instant", "gemma2-9b-it"];
       for (const modelName of groqModels) {
         try {
           const groqResp = await fetch(

@@ -1306,7 +1306,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
       try {
         const v1Res = await fetch("/api/v1/ai/agent", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            "x-business-id": business?.id || "demo-business-001",
+            ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+          },
           body: JSON.stringify({
             message: userPrompt,
             history: aiMessages.slice(-6).map((m) => ({
@@ -1328,6 +1332,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
             } else if (resJson.data.toolExecuted) {
               action = "none";
               actionData = resJson.data.toolResult;
+              // If invoice or expense was created or modified on backend, refresh state
+              if (user) {
+                fetchSupabaseData(user.id);
+              }
+            } else if (resJson.data.action && resJson.data.action !== "none") {
+              action = resJson.data.action;
+              actionData = resJson.data.actionData || {};
             }
             gotResult = true;
           }

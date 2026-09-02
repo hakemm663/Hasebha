@@ -35,14 +35,38 @@ async function authMiddleware(req: Request, res: Response, next: Function) {
       const { data: userData, error } = await supabase.auth.getUser(token);
       if (!error && userData.user) {
         (req as any).user = userData.user;
-        // Resolve business ID for user
-        const { data: biz } = await supabase
+
+        // 1. Check if user owns a business
+        const { data: ownedBiz } = await supabase
           .from('businesses')
           .select('id')
           .eq('owner_id', userData.user.id)
           .maybeSingle();
 
-        (req as any).businessId = biz?.id || headerBusinessId || 'default-business-id';
+        if (ownedBiz?.id) {
+          // If header matches owned or no header provided, use owned
+          if (!headerBusinessId || headerBusinessId === ownedBiz.id) {
+            (req as any).businessId = ownedBiz.id;
+            return next();
+          }
+        }
+
+        // 2. Check if user is a member of the requested business
+        if (headerBusinessId) {
+          const { data: membership } = await supabase
+            .from('business_members')
+            .select('business_id')
+            .eq('user_id', userData.user.id)
+            .eq('business_id', headerBusinessId)
+            .maybeSingle();
+
+          if (membership?.business_id) {
+            (req as any).businessId = membership.business_id;
+            return next();
+          }
+        }
+
+        (req as any).businessId = ownedBiz?.id || headerBusinessId || 'demo-business-001';
         return next();
       }
     }
